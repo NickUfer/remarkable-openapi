@@ -1,0 +1,106 @@
+openapi: 3.0.0
+info:
+  title: 'my.reMarkable API'
+  description: 'Definition of the reMarkable API `https://my.remarkable.com`'
+  version: 1.0.0
+servers:
+  - url: 'https://my.remarkable.com'
+paths:
+  /downloadLinks/getall:
+    get:
+      summary: 'Get all software download links'
+      operationId: getAllDownloadLinks
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Mac:
+                    type: string
+                    format: url
+                    example: 'https://downloads.remarkable.com/desktop/production/mac/reMarkable-2.3.1-126-a3a0129fd.dmg'
+                  Win:
+                    type: string
+                    format: url
+                    example: 'https://downloads.remarkable.com/desktop/production/win/reMarkable-2.3.2-win32.exe'
+  /token/json/2/device/new:
+    post:
+      summary: 'Register a new device'
+      tags:
+        - Devices
+      operationId: registerNewDevice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  pattern: '^[a-z]{8}$'
+                  description: |
+                    Get code from:
+                    * https://my.remarkable.com/connect/desktop for windows or macos
+                    * https://my.remarkable.com/connect/mobile for mobile devices
+                    * https://my.remarkable.com/connect/browser for browsers
+                    * https://my.remarkable.com/connect/remarkable for reMarkable devices
+                  example: 'abcdefgh'
+                deviceDesc:
+                  $ref: '#/components/schemas/DeviceDescription'
+                deviceID:
+                  $ref: '#/components/schemas/DeviceId'
+              required:
+                - code
+                - deviceDesc
+                - deviceID
+      responses:
+        200:
+          description: ''
+          content:
+            text/html:
+              schema:
+                type: string
+                description: 'Token of the device in plain text.'
+  /token/json/2/user/new:
+    post:
+      summary: 'Obtain an access token'
+      description: 'Obtains an expiring access token with the device token.'
+      tags:
+        - Devices
+      security:
+        - DeviceTokenAuth: [ ]
+      operationId: getAccessToken
+      responses:
+        200:
+          description: ''
+          content:
+            text/html:
+              schema:
+                type: string
+                description: 'The new bearer API token in plain text.'
+components:
+  schemas:
+    DeviceDescription:
+      type: string
+      enum: [ 'desktop-windows', 'desktop-macos', 'desktop-linux', 'mobile-android', 'mobile-ios', 'browser-chrome', 'remarkable' ]
+    DeviceId:
+      oneOf:
+        - type: string
+          format: uuid
+          description: 'UUIDv4 id of the device. This is used for everything besides the actual reMarkable device.'
+        - type: string
+          pattern: '^RM\d{3}-\d{3}-\d{5}$' # TODO check if this is valid for RM1 too.
+          description: 'Id of the reMarkable device'
+          example: 'RM123-456-78912'
+    DateTime:
+      type: string
+      format: date-time
+      example: '2020-11-13T14:05:36.351348Z'
+  securitySchemes:
+    DeviceTokenAuth:
+      type: http
+      scheme: bearer
+      description: 'The token obtained from device registration via `/token/json/2/device/new`.'
