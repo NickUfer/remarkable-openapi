@@ -37,7 +37,21 @@ paths:
                 type: array
                 minItems: 1
                 items:
-                  $ref: '#/components/schemas/GetItemResponse'
+                  allOf:
+                    - $ref: '#/components/schemas/Document'
+                    - required:
+                        - ID
+                        - Version
+                        - Type
+                        - VissibleName
+                        - ModifiedClient
+                        - CurrentPage
+                        - Bookmarked
+                        - Parent
+                        - Message
+                        - Success
+                        - BlobURLGet
+                        - BlobURLGetExpires
   /document-storage/json/2/upload/request:
     put:
       summary: 'Upload documents'
@@ -190,22 +204,6 @@ components:
       type: string
       enum: [ 'DocumentType', 'CollectionType', '' ] # empty = some wrong usage of the API in the past
     # Responses
-    GetItemResponse:
-      allOf:
-        - $ref: '#/components/schemas/Document'
-        - required:
-            - ID
-            - Version
-            - Type
-            - VissibleName
-            - ModifiedClient
-            - CurrentPage
-            - Bookmarked
-            - Parent
-            - Message
-            - Success
-            - BlobURLGet
-            - BlobURLGetExpires
     UpdateItemStatusResponse:
       type: object
       properties:
