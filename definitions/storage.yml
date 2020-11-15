@@ -226,7 +226,6 @@ components:
         - Success
     UploadDocumentResponse:
       type: object
-      minItems: 1
       properties:
         ID:
           type: string
