@@ -5,7 +5,7 @@ OpenAPI 3 definitions for the reMarkable APIs.
 ## What needs to be done
 
 - [ ] Add usage instructions and examples
-- [X] Add all endpoints
+- [ ] Add all endpoints
 - [ ] Add documentation for all endpoints (endpoints itself, fields)
 
 Probably not possible without workarounds:
