@@ -1,0 +1,274 @@
+openapi: 3.0.0
+info:
+  title: reMarkable Storage API
+  description: reMarkable Storage API
+  version: 1.0.0
+servers:
+  - url: 'https://document-storage-production-dot-remarkable-production.appspot.com'
+paths:
+  /document-storage/json/2/docs:
+    get:
+      summary: 'Get items'
+      description: ''
+      tags:
+        - Storage
+      security:
+        - AccessTokenAuth: [ ]
+      operationId: getItems
+      parameters:
+        - name: doc
+          in: query
+          description: 'Returns only the document with the uuid.'
+          schema:
+            type: string
+            format: uuid
+        - name: withBlob
+          in: query
+          description: 'Whether the download url for the document should be returned.'
+          schema:
+            type: boolean
+            default: false
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 1
+                items:
+                  $ref: '#/components/schemas/GetItemResponse'
+  /document-storage/json/2/upload/request:
+    put:
+      summary: 'Upload documents'
+      description: ''
+      tags:
+        - Storage
+      security:
+        - AccessTokenAuth: [ ]
+      operationId: uploadDocuments
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              type: array
+              minItems: 1
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/UploadDocument'
+                  - required:
+                      - ID
+                      - Version
+                      - Type
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 1
+                items:
+                  $ref: '#/components/schemas/UploadDocumentResponse'
+  /document-storage/json/2/upload/update-status:
+    put:
+      summary: 'Update statuses of items'
+      description: ''
+      tags:
+        - Storage
+      security:
+        - AccessTokenAuth: [ ]
+      operationId: updateItemStatuses
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/MetaDocument'
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 1
+                items:
+                  $ref: '#/components/schemas/UpdateItemStatusResponse'
+  /document-storage/json/2/delete:
+    put:
+      summary: 'Delete items'
+      description: ''
+      tags:
+        - Storage
+      security:
+        - AccessTokenAuth: [ ]
+      operationId: deleteItems
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 1
+                items:
+                  $ref: '#/components/schemas/DeleteItemResponse'
+components:
+  schemas:
+    Document:
+      allOf:
+        - $ref: '#/components/schemas/MetaDocument'
+        - type: object
+          properties:
+            Message:
+              type: string
+              example: ""
+            Success:
+              type: boolean
+            BlobURLGet:
+              type: string
+              format: url
+              readOnly: true
+            BlobURLGetExpires:
+              type: string
+              format: date-time
+              readOnly: true
+    MetaDocument:
+      type: object
+      properties:
+        ID:
+          type: string
+          format: uuid
+        Version:
+          type: integer
+          format: int32
+          minimum: 1
+        Type:
+          $ref: '#/components/schemas/DocumentType'
+        VissibleName:
+          type: string
+        CurrentPage:
+          type: integer
+          format: int32
+          minimum: 0
+        Bookmarked:
+          type: boolean
+        Parent:
+          type: string
+          pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|$' # uuid or empty. empty = root is parent
+        ModifiedClient:
+          type: string
+          format: date-time
+      required:
+        - ID
+        - Version
+        - Type
+        - ModifiedClient
+    UploadDocument:
+      type: object
+      properties:
+        ID:
+          type: string
+          format: uuid
+        Type:
+          type: string
+          enum: [ 'DocumentType' ]
+        Version:
+          type: integer
+          format: int32
+          minimum: 1
+      required:
+        - ID
+        - Type
+        - Version
+    DocumentType:
+      type: string
+      enum: [ 'DocumentType', 'CollectionType', '' ] # empty = some wrong usage of the API in the past
+    # Responses
+    GetItemResponse:
+      allOf:
+        - $ref: '#/components/schemas/Document'
+        - required:
+            - ID
+            - Version
+            - Type
+            - VissibleName
+            - ModifiedClient
+            - CurrentPage
+            - Bookmarked
+            - Parent
+            - Message
+            - Success
+            - BlobURLGet
+            - BlobURLGetExpires
+    UpdateItemStatusResponse:
+      type: object
+      properties:
+        ID:
+          type: string
+          format: uuid
+        Version:
+          type: integer
+          format: int32
+          minimum: 1
+        Message:
+          type: string
+          example: ""
+        Success:
+          type: boolean
+      required:
+        - ID
+        - Version
+        - Message
+        - Success
+    UploadDocumentResponse:
+      type: object
+      minItems: 1
+      properties:
+        ID:
+          type: string
+          format: uuid
+        Version:
+          type: integer
+          format: int32
+          minimum: 1
+        Message:
+          type: string
+        Success:
+          type: boolean
+        BlobURLPut:
+          type: string
+          format: url
+        BlobURLPutExpires:
+          type: string
+          format: date-time
+      required:
+        - ID
+        - Version
+        - Message
+        - Success
+        - BlobURLPut
+        - BlobURLPutExpires
+    DeleteItemResponse:
+      type: object
+      properties:
+        ID:
+          type: string
+          format: uuid
+        Version:
+          type: integer
+          format: int32
+          minimum: 1
+      required:
+        - ID
+        - Version
+  securitySchemes:
+    AccessTokenAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
